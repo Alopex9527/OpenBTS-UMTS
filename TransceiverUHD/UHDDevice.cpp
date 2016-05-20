@@ -81,12 +81,12 @@ static struct uhd_dev_offset uhd_offsets[NUM_USRP_TYPES] = {
 	{ B100,  0 },
 	{ B2XX,  99 },
 	{ X300,  73 },
-	{ UMTRX, 0 },
+	{ UMTRX, 60 },
 };
 
 static int get_dev_offset(enum uhd_dev_type type)
 {
-	if ((type != B2XX) && (type != USRP2) && (type != X300)) {
+	if ((type != B2XX) && (type != USRP2) && (type != X300) && (type != UMTRX)) {
 		LOG(ALERT) << "Unsupported device type";
 		return 0;
 	}
@@ -204,6 +204,11 @@ int UHDDevice::set_rates(double tx_rate, double rx_rate)
 	if (dev_type == B2XX) {
 		if (set_master_clk(B2XX_CLK_RT) < 0)
 			return -1;
+	} else if (dev_type == UMTRX) {
+		usrp_dev->set_tx_bandwidth(5e6);
+		usrp_dev->set_rx_bandwidth(5e6);
+
+		LOG(ALERT) << "UmTRX TX bandwidth: " << usrp_dev->get_tx_bandwidth() << "; RX bandwidth: "<< usrp_dev->get_rx_bandwidth();
 	}
 
 	try {
@@ -259,7 +264,7 @@ bool UHDDevice::parse_dev_type()
 {
 	std::string mboard_str, dev_str;
 	uhd::property_tree::sptr prop_tree;
-	size_t usrp2_str, b200_str, b210_str, x300_str, x310_str;
+	size_t usrp2_str, b200_str, b210_str, x300_str, x310_str, umtrx_str;
 
 	prop_tree = usrp_dev->get_device()->get_tree();
 	dev_str = prop_tree->access<std::string>("/name").get();
@@ -270,6 +275,7 @@ bool UHDDevice::parse_dev_type()
 	b210_str = mboard_str.find("B210");
 	x300_str = mboard_str.find("X300");
 	x310_str = mboard_str.find("X310");
+	umtrx_str = mboard_str.find("UMTRX");
 
 	if (b200_str != std::string::npos) {
 		dev_type = B2XX;
@@ -281,6 +287,8 @@ bool UHDDevice::parse_dev_type()
 		dev_type = X300;
 	} else if (x310_str != std::string::npos) {
 		dev_type = X300;
+	} else if (umtrx_str != std::string::npos) {
+		dev_type = UMTRX;
 	} else {
 		goto nosupport;
 	}

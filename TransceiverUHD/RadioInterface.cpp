@@ -41,7 +41,7 @@ extern "C" {
  * clocking with downsampling by 4.
  */
 #define RESAMP_INRATE              384
-#define RESAMP_OUTRATE             625
+#define RESAMP_OUTRATE             650
 
 /*
  * Number of taps per resampler-RRC filter partitions
