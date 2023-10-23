@@ -22,7 +22,6 @@ libcontrol_la_SOURCES = \
 	TransactionTable.cpp \
 	TMSITable.cpp \
 	CallControl.cpp \
-	SMSControl.cpp \
 	ControlCommon.cpp \
 	MobilityManagement.cpp \
 	RadioResource.cpp \
@@ -31,7 +30,6 @@ libcontrol_la_SOURCES = \
 
 noinst_HEADERS = \
 	ControlCommon.h \
-	SMSControl.h \
 	TransactionTable.h \
 	TMSITable.h \
 	RadioResource.h \

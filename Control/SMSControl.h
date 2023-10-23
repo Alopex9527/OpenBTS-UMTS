@@ -19,7 +19,7 @@
 #ifndef SMSCONTROL_H
 #define SMSCONTROL_H
 
-#include <SMSMessages.h>
+////#include <SMSMessages.h>
 
 namespace GSM {
 class L3Message;
@@ -37,23 +37,23 @@ namespace Control {
 class TransactionEntry;
 
 /** MOSMS state machine.  */
-void MOSMSController(const GSM::L3CMServiceRequest *req, UMTS::DCCHLogicalChannel *LCH);
+////void MOSMSController(const GSM::L3CMServiceRequest *req, UMTS::DCCHLogicalChannel *LCH);
 
 /** MOSMS-with-parallel-call state machine.  */
-void InCallMOSMSStarter(Control::TransactionEntry *parallelCall);
+////void InCallMOSMSStarter(Control::TransactionEntry *parallelCall);
 
 /** MOSMS-with-parallel-call state machine.  */
-void InCallMOSMSController(const SMS::CPData *msg, Control::TransactionEntry* transaction, UMTS::DCCHLogicalChannel *LCH);
+////void InCallMOSMSController(const SMS::CPData *msg, Control::TransactionEntry* transaction, UMTS::DCCHLogicalChannel *LCH);
 /**
 	Basic SMS delivery from an established CM.
 	On exit, SAP3 will be in ABM and LCH will still be open.
 	Throws exception for failures in connection layer or for parsing failure.
 	@return true on success in relay layer.
 */
-bool deliverSMSToMS(const char *callingPartyDigits, const char* message, const char* contentType, unsigned TI, UMTS::DCCHLogicalChannel *LCH);
+////bool deliverSMSToMS(const char *callingPartyDigits, const char* message, const char* contentType, unsigned TI, UMTS::DCCHLogicalChannel *LCH);
 
 /** MTSMS */
-void MTSMSController(Control::TransactionEntry* transaction, UMTS::DCCHLogicalChannel *LCH);
+////void MTSMSController(Control::TransactionEntry* transaction, UMTS::DCCHLogicalChannel *LCH);
 
 }
 

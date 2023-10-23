@@ -106,7 +106,6 @@ AC_CONFIG_FILES([\
     UMTS/Makefile \
     SGSNGGSN/Makefile \
     SIP/Makefile \
-    SMS/Makefile \
     TransceiverRAD1/Makefile \
     TransceiverUHD/Makefile \
     TRXManager/Makefile \

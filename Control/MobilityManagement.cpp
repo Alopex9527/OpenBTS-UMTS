@@ -20,7 +20,7 @@
 
 #include "ControlCommon.h"
 #include "MobilityManagement.h"
-#include "SMSControl.h"
+////#include "SMSControl.h"
 #include "CallControl.h"
 
 #include <GSML3RRMessages.h>
@@ -46,6 +46,7 @@ using namespace Control;
 
 
 /** Controller for CM Service requests, dispatches out to multiple possible transaction controllers. */
+/* 这个函数中，与SMS相关的代码已经被注释，只保留了与Mobile Originated Call 相关的代码 */
 void Control::CMServiceResponder(const GSM::L3CMServiceRequest* cmsrq, UMTS::LogicalChannel* DCCH)
 {
 	assert(cmsrq);
@@ -55,9 +56,11 @@ void Control::CMServiceResponder(const GSM::L3CMServiceRequest* cmsrq, UMTS::Log
 		case GSM::L3CMServiceType::MobileOriginatedCall:
 			MOCStarter(cmsrq,dynamic_cast<UMTS::DTCHLogicalChannel*>(DCCH));
 			break;
+#if 0
 		case GSM::L3CMServiceType::ShortMessage:
-			MOSMSController(cmsrq,dynamic_cast<UMTS::DCCHLogicalChannel*>(DCCH));
+			MOSMSController(cmsrq,dynamic_cast<UMTS::DCCHLogicalChannel*>(DCCH));	//MOSMSController函数控制短信的发送和接收
 			break;
+#endif
 		default:
 			LOG(NOTICE) << "service not supported for " << *cmsrq;
 			// Cause 0x20 means "serivce not supported".
@@ -151,7 +154,12 @@ bool authenticateViaCaching(const char *IMSI, UMTS::DCCHLogicalChannel *DCCH)
 /**
 	Send a given welcome message from a given short code.
 	@return true if it was sent
+	定义了一个名为`sendWelcomeMessage`的函数，用于向指定的移动台发送欢迎短信。
+	函数接受欢迎短信的名称、短信发送方的短代码名称、移动台的IMSI、DCCH逻辑信道以及可选的白名单代码作为参数。
+	函数内部会根据参数构造短信内容并调用`deliverSMSToMS`函数将短信发送给移动台。
+	如果欢迎短信名称未在配置文件中定义，则函数返回false。
 */
+#if 0
 bool sendWelcomeMessage(const char* messageName, const char* shortCodeName, const char *IMSI, UMTS::DCCHLogicalChannel* DCCH, const char *whiteListCode = NULL)
 {
 	if (!gConfig.defines(messageName)) return false;
@@ -165,6 +173,7 @@ bool sendWelcomeMessage(const char* messageName, const char* shortCodeName, cons
 		random()%7,DCCH);
 	return true;
 }
+#endif
 
 
 /**
@@ -322,12 +331,19 @@ void Control::LocationUpdatingController(const GSM::L3LocationUpdatingRequest* l
 	}
 
 	// We fail closed unless we're configured otherwise
+	/**
+	 * 此if判断的作用是检查是否成功完成了移动性管理过程中的注册步骤。
+	 * 如果注册失败并且未开启开放式注册，那么会执行if语句块中的代码。
+	 * 具体来说，它会发送一个位置更新拒绝消息，释放信道并返回。
+	 * 如果之前没有分配TMSI，则会发送欢迎短信。
+	 */
 	if (!success && !openRegistration) {
 		LOG(INFO) << "registration FAILED: " << mobileID;
 		DCCH->send(GSM::L3LocationUpdatingReject(gConfig.getNum("Control.LUR.UnprovisionedRejectCause")));
 		if (!preexistingTMSI) {
-			sendWelcomeMessage( "Control.LUR.FailedRegistration.Message",
-				"Control.LUR.FailedRegistration.ShortCode", IMSI,DCCH);
+#if 0
+			sendWelcomeMessage( "Control.LUR.FailedRegistration.Message", "Control.LUR.FailedRegistration.ShortCode", IMSI,DCCH);
+#endif
 		}
 		// Release the channel and return.
 		DCCH->send(GSM::L3ChannelRelease());
@@ -367,6 +383,13 @@ void Control::LocationUpdatingController(const GSM::L3LocationUpdatingRequest* l
 	}
 
 	// If this is an IMSI attach, send a welcome message.
+	/**
+	 * 这个if判断的作用是在移动性管理过程中的附着过程中，检查是否是IMSI附着，
+	 * 并根据是否成功完成附着过程发送欢迎短信。
+	 * 如果是IMSI附着并且附着成功，则发送“Control.LUR.NormalRegistration.Message”和“Control.LUR.NormalRegistration.ShortCode”欢迎短信。
+	 * 如果是IMSI附着但附着失败，则发送“Control.LUR.OpenRegistration.Message”和“Control.LUR.OpenRegistration.ShortCode”欢迎短信。
+	 */
+#if 0
 	if (IMSIAttach) {
 		if (success) {
 			sendWelcomeMessage( "Control.LUR.NormalRegistration.Message",
@@ -376,6 +399,7 @@ void Control::LocationUpdatingController(const GSM::L3LocationUpdatingRequest* l
 				"Control.LUR.OpenRegistration.ShortCode", IMSI, DCCH);
 		}
 	}
+#endif
 
 
 	// Release the channel and return.

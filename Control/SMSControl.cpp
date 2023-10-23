@@ -47,8 +47,10 @@
 using namespace std;
 using namespace Control;
 
+#if 0
 #include "SMSMessages.h"
 using namespace SMS;
+#endif
 
 #include "SIPInterface.h"
 #include "SIPUtility.h"
@@ -62,7 +64,18 @@ using namespace SIP;
 /**
 	Read an L3Frame from SAP3.
 	Throw exception on failure.  Will NOT return a NULL pointer.
+	这个函数与SMS（短信）有关。它是一个用于从UMTS DCCH逻辑通道接收SMS消息的函数。
+	
+	该函数名为getFrameSMS，其作用是从一个UMTS的DCCH逻辑信道中接收一个GSM的L3帧。
+	该函数有两个参数，第一个参数是一个指向UMTS::DCCHLogicalChannel类型的指针，
+	第二个参数是一个GSM::Primitive类型的枚举值，默认值为GSM::DATA。该函数返回一个指向GSM::L3Frame类型的指针。
+
+    该函数首先会从指定的逻辑信道中接收一个L3帧，如果在指定的时间内没有接收到帧，则会抛出一个ChannelReadTimeout异常。
+	如果接收到的帧的类型与指定的枚举值不匹配，则会抛出一个UnexpectedPrimitive异常。
+	如果接收到的帧是数据帧，但其协议类型不是SMS，则会抛出一个UnexpectedMessage异常。
+	最后，该函数会返回接收到的L3帧的指针。
 */
+#if 0
 GSM::L3Frame* getFrameSMS(UMTS::DCCHLogicalChannel *LCH, GSM::Primitive primitive=GSM::DATA)
 {
 	// FIXME -- We need to determine a correct timeout value here.
@@ -82,8 +95,26 @@ GSM::L3Frame* getFrameSMS(UMTS::DCCHLogicalChannel *LCH, GSM::Primitive primitiv
 	}
 	return retVal;
 }
+#endif
 
 
+/**
+ * sendSIP函数的作用是将一个SMS消息通过SIP协议发送到指定的地址。
+ * 该函数有四个参数，第一个参数是一个指向TransactionEntry类型的指针，
+ * 第二个参数是一个字符串类型的地址，第三个参数是一个字符串类型的消息体，
+ * 第四个参数是一个字符串类型的内容类型。该函数的具体实现步骤如下：
+	1. 完成事务记录。
+	2. 向服务器发送TL-SUBMIT。
+	3. 等待响应或超时。
+	4. 如果响应为OK或ACCEPTED，则返回true，否则返回false。
+
+ * 具体实现步骤如下：
+	1. 将地址转换为GSM::L3CalledPartyBCDNumber类型的对象，并将其作为被叫方号码添加到事务记录中。
+	2. 将消息体添加到事务记录中，并通过调用`MOSMSSendMESSAGE`函数将事务记录发送到服务器。
+	3. 等待服务器的响应，如果响应为OK或ACCEPTED，则返回SIP::Cleared。
+	4. 如果响应为OK或ACCEPTED，则返回true，否则返回false。
+ */
+#if 0
 bool sendSIP(TransactionEntry *transaction, const char* address, const char* body, const char* contentType)
 {
 	// Steps:
@@ -108,13 +139,24 @@ bool sendSIP(TransactionEntry *transaction, const char* address, const char* bod
 	// Step 4 -- Done
 	return state==SIP::Cleared;
 }
+#endif
 
 /**
 	Process the RPDU.
 	@param mobileID The sender's IMSI.
 	@param RPDU The RPDU to process.
 	@return true if successful.
+	handleRPDU函数，它有两个参数：一个指向`TransactionEntry`类型的指针和一个`RLFrame`类型的引用。
+	该函数的作用是处理接收到的RPDU（Radio Protocol Data Unit）消息，将其转换为SMS消息并通过SIP协议发送到指定地址。
+	具体实现步骤如下：
+	1. 根据RPDU的MTI（Message Type Indicator）类型，判断消息类型是Data、Ack、SMMA还是Error。
+	2. 如果消息类型是Data，则根据配置文件中的MIME类型将消息体解码为文本或16进制字符串。
+	3. 如果配置文件中定义了SMSC（Short Message Service Center）地址，则使用该地址作为SIP消息的目标地址；
+	   否则，从RPDU中获取目标地址。
+	4. 调用`sendSIP`函数将SMS消息通过SIP协议发送到目标地址。
+	5. 如果消息类型是Ack或SMMA，则返回true；如果消息类型是Error，则返回false。
 */
+#if 0
 bool handleRPDU(TransactionEntry *transaction, const RLFrame& RPDU)
 {
 	LOG(DEBUG) << "SMS: handleRPDU MTI=" << RPDU.MTI();
@@ -158,10 +200,10 @@ bool handleRPDU(TransactionEntry *transaction, const RLFrame& RPDU)
 			return false;
 	}
 }
+#endif 
 
 
-
-
+#if 0
 void Control::MOSMSController(const GSM::L3CMServiceRequest *req, UMTS::DCCHLogicalChannel *LCH)
 {
 	assert(req);
@@ -280,10 +322,10 @@ void Control::MOSMSController(const GSM::L3CMServiceRequest *req, UMTS::DCCHLogi
 	gTransactionTable.remove(transaction);
 	LOG(INFO) << "closing the Um channel";
 }
+#endif
 
 
-
-
+#if 0
 bool Control::deliverSMSToMS(const char *callingPartyDigits, const char* message, const char* contentType, unsigned L3TI, UMTS::DCCHLogicalChannel *LCH)
 {
 	if (!LCH->multiframeMode(3)) {
@@ -417,10 +459,10 @@ bool Control::deliverSMSToMS(const char *callingPartyDigits, const char* message
 	LCH->send(CPAck(L3TI),3);
 	return success;
 }
+#endif
 
 
-
-
+#if 0
 void Control::MTSMSController(TransactionEntry *transaction, UMTS::DCCHLogicalChannel *LCH)
 {
 	assert(LCH);
@@ -465,10 +507,11 @@ void Control::MTSMSController(TransactionEntry *transaction, UMTS::DCCHLogicalCh
 	// Done.
 	gTransactionTable.remove(transaction);
 }
+#endif
 
 
 
-
+#if 0
 void Control::InCallMOSMSStarter(TransactionEntry *parallelCall)
 {
 	UMTS::LogicalChannel *hostChan = parallelCall->channel();
@@ -483,9 +526,9 @@ void Control::InCallMOSMSStarter(TransactionEntry *parallelCall)
 		DCCH);
 	gTransactionTable.add(newTransaction);
 }
+#endif
 
-
-
+#if 0
 void Control::InCallMOSMSController(const CPData *cpData, TransactionEntry* transaction, UMTS::DCCHLogicalChannel *LCH)
 {
 	LOG(INFO) << *cpData;
@@ -556,5 +599,6 @@ void Control::InCallMOSMSController(const CPData *cpData, TransactionEntry* tran
 
 	gTransactionTable.remove(transaction);
 }
+#endif
 
 // vim: ts=4 sw=4

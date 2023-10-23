@@ -21,7 +21,7 @@
 
 
 //#include <SMSTransfer.h>
-#include <SMSMessages.h>
+////#include <SMSMessages.h>
 //using namespace SMS;
 
 
@@ -137,9 +137,11 @@ GSM::L3Message* GSM::parseL3(const GSM::L3Frame& source)
 	try {
 		switch (PD) {
 			//case L3RadioResourcePD: retVal=parseL3RR(source); break;
-			case L3MobilityManagementPD: retVal=parseL3MM(source); break;
-			case L3CallControlPD: retVal=parseL3CC(source); break;
-			case L3SMSPD: retVal=SMS::parseSMS(source); break;
+			case L3MobilityManagementPD: retVal=parseL3MM(source); break; // 函数返回值为L3MMMessage*， 基类为L3Message
+			case L3CallControlPD: retVal=parseL3CC(source); break; // 函数返回值为L3CCMessage*， 基类为L3Message
+#if 0
+			case L3SMSPD: retVal=SMS::parseSMS(source); break; // 函数返回值为SMSMessage*， 基类为L3Message
+#endif		
 			default:
 				LOG(NOTICE) << "L3 parsing failed for unsupported protocol " << PD;
 				return NULL;

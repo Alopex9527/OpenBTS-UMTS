@@ -26,7 +26,6 @@ SUBDIRS = \
 	GSM \
 	UMTS \
 	SGSNGGSN \
-	SMS \
 	TransceiverRAD1 \
 	TransceiverUHD \
 	TRXManager \

@@ -29,7 +29,6 @@ OpenBTS_UMTS_LDADD = \
 	$(SGSNGGSN_LA) \
 	$(ASN_LA) \
 	$(GSM_LA) \
-	$(SMS_LA) \
 	$(NODEMANAGER_LA) \
 	$(OSIP_LIBS) \
 	$(ORTP_LIBS) \

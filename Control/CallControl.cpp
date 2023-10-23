@@ -31,7 +31,7 @@
 #include "ControlCommon.h"
 #include "TransactionTable.h"
 #include "MobilityManagement.h"
-#include "SMSControl.h"
+////#include "SMSControl.h"
 #include "CallControl.h"
 
 #include <GSMCommon.h>
@@ -174,6 +174,12 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 	// Call connection steps.
 
 	// Connect Acknowledge
+	/**
+	 * 处理GSM网络中的`L3ConnectAcknowledge`消息。
+	 * 当收到`L3ConnectAcknowledge`消息时，代码会记录一条日志消息，指出已经收到了GSM Connect Acknowledge消息，
+	 * 并重置事务计时器。
+	 * 然后，代码会将事务的GSM状态设置为Active。最后，函数返回false。
+	 */
 	if (dynamic_cast<const GSM::L3ConnectAcknowledge*>(message)) {
 		LOG(INFO) << "GSM Connect Acknowledge " << *transaction;
 		transaction->resetTimers();
@@ -183,6 +189,11 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 
 	// Connect
 	// GSM 04.08 5.2.2.5 and 5.2.2.6
+	/**
+	 * 处理GSM网络中的`L3Connect`消息。
+	 * 当收到`L3Connect`消息时，代码会记录一条日志消息，指出已经收到了GSM Connect消息，并重置事务计时器。
+	 * 然后，代码会将事务的GSM状态设置为Active。最后，函数返回false。
+	 */
 	if (dynamic_cast<const GSM::L3Connect*>(message)) {
 		LOG(INFO) << "GSM Connect " << *transaction;
 		transaction->resetTimers();
@@ -193,6 +204,12 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 	// Call Confirmed
 	// GSM 04.08 5.2.2.3.2
 	// "Call Confirmed" is the GSM MTC counterpart to "Call Proceeding"
+	/**
+	 * 处理GSM网络中的`L3CallConfirmed`消息。
+	 * 当收到`L3CallConfirmed`消息时，代码会记录一条日志消息，指出已经收到了GSM Call Confirmed消息。
+	 * 然后，代码会重置事务计时器为303，设置事务计时器为301，并将事务的GSM状态设置为MTCConfirmed。
+	 * 最后，函数返回false。
+	 */
 	if (dynamic_cast<const GSM::L3CallConfirmed*>(message)) {
 		LOG(INFO) << "GSM Call Confirmed " << *transaction;
 		transaction->resetTimer("303");
@@ -203,6 +220,11 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 
 	// Alerting
 	// GSM 04.08 5.2.2.3.2
+	/**
+	 * 处理GSM网络中的`L3Alerting`消息。
+	 * 当收到`L3Alerting`消息时，代码会记录一条日志消息，指出已经收到了GSM Alerting消息，并重置事务计时器为310。
+	 * 然后，代码会设置事务计时器为301，并将事务的GSM状态设置为CallReceived。最后，函数返回false。
+	 */
 	if (dynamic_cast<const GSM::L3Alerting*>(message)) {
 		LOG(INFO) << "GSM Alerting " << *transaction;
 		transaction->resetTimer("310");
@@ -218,6 +240,14 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 
 	// Disconnect (1st step of MOD)
 	// GSM 04.08 5.4.3.2
+	/**
+	 * 处理GSM网络中的`L3Disconnect`消息。
+	 * 当收到`L3Disconnect`消息时，代码会记录一条日志消息，指出已经收到了GSM Disconnect消息，
+	 * 并将事务计时器重置为初始状态。
+	 * 然后，代码会发送一个`L3Release`消息以释放LCH，并设置事务计时器为308。
+	 * 接下来，代码会将事务的GSM状态设置为ReleaseRequest，并调用`MODSendBYE`函数以通知MOD发送BYE消息。
+	 * 最后，函数返回false。
+	 */
 	if (dynamic_cast<const GSM::L3Disconnect*>(message)) {
 		LOG(INFO) << "GSM Disconnect " << *transaction;
 		transaction->resetTimers();
@@ -230,6 +260,13 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 	}
 
 	// Release (2nd step of MTD)
+	/**
+	 * 处理GSM网络中的`L3Release`消息。
+	 * 当收到`L3Release`消息时，代码会记录一条日志消息，指出已经收到了GSM Release消息，并将事务计时器重置为初始状态。
+	 * 然后，代码会发送一个`L3ReleaseComplete`消息以确认收到GSM Release消息，
+	 * 并发送一个`L3ChannelRelease`消息以释放LCH。
+	 * 最后，代码会将事务的GSM状态设置为NullState，并调用`MTDSendOK`函数以通知MTD发送完成。函数返回true。
+	 */
 	if (dynamic_cast<const GSM::L3Release*>(message)) {
 		LOG(INFO) << "GSM Release " << *transaction;
 		transaction->resetTimers();
@@ -242,6 +279,12 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 
 	// Release Complete (3nd step of MOD)
 	// GSM 04.08 5.4.3.4
+	/**
+	 * 这个if判断处理GSM网络中的`L3ReleaseComplete`消息。
+	 * 当收到`L3ReleaseComplete`消息时，代码会记录一条日志消息，指出已经收到了GSM Release Complete消息，	 
+	 * 并将事务计时器重置为初始状态。
+	 * 然后，代码会发送一个`L3ChannelRelease`消息以释放LCH，并将事务的GSM状态设置为NullState。最后，函数返回true。
+	 */
 	if (dynamic_cast<const GSM::L3ReleaseComplete*>(message)) {
 		LOG(INFO) << "GSM Release Complete " << *transaction;
 		transaction->resetTimers();
@@ -252,6 +295,12 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 	}
 
 	// IMSI Detach -- the phone is shutting off.
+	/**
+	 * 这段代码与SIP模块有关。
+	 * 当收到`L3IMSIDetachIndication`消息时，代码会调用`forceSIPClearing`函数，该函数将强制清除SIP会话。
+	 * 这是因为IMSI分离过程需要释放LCH，而SIP会话需要LCH。
+	 * 因此，为了确保SIP会话正确地关闭，需要在IMSI分离过程中强制清除SIP会话。
+	 */
 	if (const GSM::L3IMSIDetachIndication* detach = dynamic_cast<const GSM::L3IMSIDetachIndication*>(message)) {
 		// The IMSI detach procedure will release the LCH.
 		LOG(INFO) << "GSM IMSI Detach " << *transaction;
@@ -262,6 +311,13 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 
 	// Start DTMF
 	// Transalate to RFC-2967 or RFC-2833.
+	/**
+	 * 这个if判断处理GSM网络中的`L3StartDTMF`消息。
+	 * 当收到`L3StartDTMF`消息时，代码会检查是否定义了`SIP.DTMF.RFC2833`或`SIP.DTMF.RFC2967`选项。
+	 * 如果定义了这些选项，则代码会将DTMF信号转换为RFC-2967或RFC-2833格式，并尝试发送DTMF信号。
+	 * 如果发送成功，则代码会发送一个`L3StartDTMFAcknowledge`消息以确认DTMF信号的请求。
+	 * 如果发送失败，则代码会发送一个`L3StartDTMFReject`消息，其中的0x3f表示“服务或选项不可用”。
+	 */
 	if (const GSM::L3StartDTMF* startDTMF = dynamic_cast<const GSM::L3StartDTMF*>(message)) {
 		char key = startDTMF->key().IA5();
 		LOG(INFO) << "DMTF key=" << key <<  ' ' << *transaction;
@@ -289,6 +345,12 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 
 	// Stop DTMF
 	// RFC-2967 or RFC-2833
+	/**
+	 * 这个if判断处理GSM网络中的`L3StopDTMF`消息。
+	 * 当收到`L3StopDTMF`消息时，代码会停止当前正在进行的DTMF信号，
+	 * 并发送一个`L3StopDTMFAcknowledge`消息以确认停止DTMF信号的请求。
+	 * 如果成功停止DTMF信号，则函数返回false。
+	 */
 	if (dynamic_cast<const GSM::L3StopDTMF*>(message)) {
 		transaction->stopDTMF();
 		LCH->send(GSM::L3StopDTMFAcknowledge(transaction->L3TI()));
@@ -296,6 +358,14 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 	}
 
 	// CM Service Request
+	/**
+	 * 这个if判断处理GSM网络中的`CM Service Request`消息。
+	 * 当收到`CM Service Request`消息时，代码会检查服务类型是否为短信服务，
+	 * 如果是，则调用`InCallMOSMSStarter`函数启动短信发送。
+	 * 如果服务类型不是短信，则代码会拒绝该请求。
+	 * 如果请求被拒绝，代码会发送一个`L3CMServiceReject`消息，其中的0x20表示“服务不支持”。
+	 */
+#if 0
 	if (const GSM::L3CMServiceRequest *cmsrq = dynamic_cast<const GSM::L3CMServiceRequest*>(message)) {
 		// SMS submission?  The rest will happen on the SACCH.
 		if (cmsrq->serviceType().type() == GSM::L3CMServiceType::ShortMessage) {
@@ -310,11 +380,16 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 		LCH->send(GSM::L3CMServiceReject(0x20));
 		return false;
 	}
+#endif
 
 	// Stubs for unsupported features.
 	// We need to answer the handset so it doesn't hang.
 
 	// Hold
+	/**
+	 * 这个if判断处理GSM网络中的各种消息。
+	 * 如果收到`L3Hold`消息，则代码会拒绝该请求并发送一个`L3HoldReject`消息，其中的0x3f表示“选项不可用”。
+	 */
 	if (dynamic_cast<const GSM::L3Hold*>(message)) {
 		LOG(NOTICE) << "rejecting hold request from " << transaction->subscriber();
 		// Default cause is 0x3f, option not available
@@ -322,6 +397,9 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, UMTS::DTCHLogicalC
 		return false;
 	}
 
+	/**
+	 * 如果收到其他类型的消息，则代码会记录一条日志消息，指出该消息不受支持。
+	 */
 	if (message)  { LOG(NOTICE) << "no support for message " << *message << " from " << transaction->subscriber(); }
 	else { LOG(NOTICE) << "no support for unrecognized message from " << transaction->subscriber(); }
 
