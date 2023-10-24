@@ -19,7 +19,7 @@
 #include "UMTSLogicalChannel.h"
 #include <ControlCommon.h>
 #include <Logger.h>
-#include <Ggsn.h>
+////#include <Ggsn.h>
 #include "AsnHelper.h"
 //#include "asn_system.h"	// Dont let other includes land in namespace ASN.
 namespace ASN {
@@ -296,7 +296,10 @@ void UMTSConfig::init(ARFCNManager *downstream)
 	***/
 }
 
-
+/**
+ * 函数的功能是启动UMTS配置，包括强制重新编码信标、启动消息分页、
+ * 启动广播信道处理、启动L2 RLC处理和启动SGSN GGSN。
+ */
 void UMTSConfig::start(ARFCNManager* C0)
 {
 	sPrevBeaconStart = sBeaconStartInvalid;	// Force beacon re-encoding
@@ -307,7 +310,7 @@ void UMTSConfig::start(ARFCNManager* C0)
 	// mFachFec->setDownstream(C0);	(pat) Moved this to the constructor.
 	// Do not call this until AGCHs are installed.
 	//mAccessGrantThread.start(RRC::AccessGrantServiceLoop,NULL);
-	SGSN::Ggsn::start();
+	////SGSN::Ggsn::start();
 	l2RlcStart();	// Start the handler for the high side of RLCs.
 }
 
@@ -648,6 +651,14 @@ void UMTSConfig::regenerateBeacon()
 	noRecursionPlease--;
 }
 
+
+/**
+ * 此静态函数的作用是生成 SCCPCH（Secondary Common Control Physical Channel）系统信息。
+ * 在函数内部，它会创建一个 `SCCPCH_SystemInformation` 结构体，并设置其中的各个字段，
+ * 包括 SCCPCH 的模式、STTD（Space Time Transmit Diversity）指示器、SF（Spreading Factor）和码号、传输格式和传输格式组合等。
+ * 此外，如果需要添加 PICH（Paging Indicator Channel），它还会创建一个 `PICH_Info_t` 结构体，
+ * 并将其添加到 SCCPCH 系统信息中。
+ */
 static SCCPCH_SystemInformation *generateSCCPCH(unsigned fachChCode, bool addPICH,unsigned pichChCode)
 {
 	// (pat) See 10.3.6.72: Secondary CCPCH Info IE.

@@ -20,7 +20,7 @@
 #include "URRCMessages.h"
 #include "URLC.h"
 #include "URRC.h"
-#include "GPRSL3Messages.h"	// For SmQoS
+////#include "GPRSL3Messages.h"	// For SmQoS
 #include <stdlib.h>	// for rand
 
 #include "asn_system.h"
@@ -42,6 +42,12 @@ namespace UMTS {
 void handleRrcConnectionRequest(ASN::RRCConnectionRequest_t *msg);	// This kinda sucks.
 
 // Return rand in the range 0..maxval inclusive.
+/**
+ * rangerand函数的功能是生成一个在指定范围内的随机整数。
+ * 它接受三个参数：`minval`表示随机数的最小值，`maxval`表示随机数的最大值，`pseed`表示随机数生成器的种子。
+ * 函数内部使用`rand_r`函数生成一个0到1之间的随机小数，然后将其乘以范围，再加上最小值，最后使用`round`函数将结果四舍五入为整数。
+ * 函数返回值为生成的随机整数。
+ */
 static int rangerand(int minval, int maxval, unsigned *pseed)
 {
 	int range = maxval - minval;
@@ -60,7 +66,7 @@ class MacTester : public MacEngine
 		std::cout <<"tb="<<(ByteVector)tb;
 	}
 
-	void macService(int fn) {}
+	void macService(int fn) {}	// 对纯虚函数的空实现
 };
 
 void testCreateFakeUE_Identity(ASN::InitialUE_Identity_t *ueIdentity)
@@ -83,6 +89,12 @@ static void testCreateRRCConnectionRequest(ASN::RRCConnectionRequest_t *ccrmsg)
 	asn_long2INTEGER(&ccrmsg->protocolErrorIndicator,ASN::ProtocolErrorIndicator_noError);
 }
 
+/**
+ * 函数的功能是创建一个虚拟的UE（用户终端设备）信息。
+ * 函数内部创建了一个`ByteVector`类型的变量`fakeimsi`，并将其初始化为字符串`"1234567890"`的字节表示。
+ * 然后使用`fakeimsi`创建一个`AsnUeId`类型的变量`imsiId`，
+ * 并将其作为参数创建一个`UEInfo`类型的对象。最后将该对象的指针返回。
+ */
 static UEInfo *testCreateFakeUe()
 {
 	// Test Radio Bearer Setup message stand-alone.
@@ -101,6 +113,13 @@ static unsigned sseed;
 static unsigned sNumTestVectors;
 
 // Receives vectors from recv2 during rlc test.
+/**
+ * `testRlcRecv`函数的功能是在进行RLC测试时接收从`recv2`函数传来的数据向量，并进行比较。
+ * 函数接受两个参数：`sdu`表示接收到的数据向量，`rbid`表示无线电资源块ID。
+ * 函数内部首先使用`assert`函数判断`rbid`的值是否为1或2，然后判断`sdu`是否与预期的数据向量相等。
+ * 如果不相等，则将测试失败计数器`sTestFailCnt`加1，并打印错误信息；否则打印匹配信息。
+ * 最后将接收到的数据向量计数器`sTestRecvVectorNum`加1。
+ */
 void testRlcRecv(URlcUpSdu &sdu, RbId rbid)
 {
 	assert(rbid == 1 || rbid == 2);
@@ -129,6 +148,17 @@ void testRlcRecv(URlcUpSdu &sdu, RbId rbid)
 
 // For testing, copy data from the trans to the recv.
 // Return how many.
+/**
+ * `rlcTransfer`函数的功能是将从`URlcTrans`对象中读取的数据传输到`URlcRecv`对象中。
+ * 函数接受四个参数：
+ * `trans`表示发送方的`URlcTrans`对象，
+ * `recv`表示接收方的`URlcRecv`对象，
+ * `percentloss`表示丢包率，
+ * `dir`表示传输方向。
+ * 函数内部使用`rlcReadLowSide`函数从`trans`对象中读取数据，然后将读取到的数据转换为`BitVector`类型，
+ * 并使用`rlcWriteLowSide`函数将数据写入到`recv`对象中。
+ * 如果`percentloss`不为0，则有一定概率丢失数据。函数返回值为传输的数据块数。
+ */
 static unsigned rlcTransfer(URlcTrans *trans, URlcRecv *recv, int percentloss,int dir)
 {
 	printf("rlcTransfer dir=%d\n",dir);
@@ -150,6 +180,16 @@ static unsigned rlcTransfer(URlcTrans *trans, URlcRecv *recv, int percentloss,in
 	return pducnt;
 }
 
+
+/**
+ * `rlcRun`函数的功能是在进行RLC测试时，将两个`URlcPair`对象之间的数据进行传输。
+ * 函数接受四个参数：
+ * `pair1`和`pair2`分别表示两个`URlcPair`对象，
+ * `percentloss`表示丢包率，
+ * `statuslossless`表示是否启用状态无损传输。
+ * 函数内部使用`rlcTransfer`函数将数据从一个`URlcTrans`对象传输到另一个`URlcRecv`对象中，
+ * 然后将传输的数据块数累加到计数器`pducnt`中。函数返回值为传输的数据块数。
+ */
 static unsigned rlcRun(URlcPair *pair1,URlcPair *pair2,int percentloss, bool statuslossless)
 {
 	int pducnt = 0;
@@ -166,6 +206,15 @@ static unsigned rlcRun(URlcPair *pair1,URlcPair *pair2,int percentloss, bool sta
 }
 
 //static void testRlc(const char*subcmd, int argc, char **argv)
+/**
+ * `rlcTest`函数的功能是进行RLC测试。
+ * 函数接受三个参数：`argc`表示命令行参数个数，`argv`表示命令行参数数组，`os`表示输出流。
+ * 函数内部首先对命令行参数进行解析，包括丢包率、测试向量数量、随机种子等参数。
+ * 然后创建两个`URlcPair`对象，分别表示发送方和接收方。
+ * 接着将两个`URlcPair`对象中的`URlcTrans`对象和`URlcRecv`对象进行连接，
+ * 然后使用随机生成的测试向量进行数据传输，并计算传输的数据块数。
+ * 最后输出传输的统计信息和各个对象的状态信息。
+ */
 int rlcTest(int argc, char** argv, ostream& os)
 {
 	gLogToConsole = true;
@@ -492,6 +541,7 @@ int rrcTest(int argc, char** argv, ostream& os)
 		uep->ueConnectRlc(gRrcDcchConfig,stCELL_FACH);
 		uep->ueSetState(stCELL_FACH);
 
+#if 0
 		// Manufacture a Quality-of-Service.  Currently we only use two fields.
 		SGSN::SmQoS qos(12);
 		qos.setMaxBitRate(16*8,0);		// in kbits/sec
@@ -502,7 +552,7 @@ int rrcTest(int argc, char** argv, ostream& os)
 		result = SGSN::SgsnAdapter::allocateRabForPdp(uep->mURNTI,5,qos);
 		printf("result=%d failcode=%d\n",result.mStatus,result.mFailCode); 
 		result.text(std::cout);
-
+#endif
 		/***
 		// Allocate a physical channel.
 		DCHFEC *dch = gChannelTree.chChooseBySF(256);

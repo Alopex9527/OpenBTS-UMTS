@@ -14,7 +14,7 @@
 
 #include "AsnHelper.h"
 //#include "ByteVector.h"	included from AsnHelper.h
-#include "SgsnBase.h"		// For the layer 3 logging facility.
+////#include "SgsnBase.h"		// For the layer 3 logging facility.
 #include <ctype.h>
 #include <Configuration.h>
 #include "URRC.h"
@@ -40,6 +40,11 @@ namespace UMTS {
 // Make the ByteVector large enough to hold the expected encoded message,
 // and the ByteVector size will be shrink wrapped around the result before return.
 // If the descr is specified, an error message is printed on failure before return.
+/**
+ * uperEncodeToBV函数的功能是将一个ASN.1类型的结构体编码为UPER格式的二进制数据，
+ * 并将结果存储在一个ByteVector对象中。如果编码成功，函数返回true，否则返回false。
+ * 如果在编码过程中出现错误，函数会打印一个错误消息。
+ */
 bool uperEncodeToBV(ASN::asn_TYPE_descriptor_t *td,void *sptr, ByteVector &result, const std::string descr)
 {
 	rn_asn_debug = gConfig.getNum("UMTS.Debug.ASN");
@@ -56,6 +61,13 @@ bool uperEncodeToBV(ASN::asn_TYPE_descriptor_t *td,void *sptr, ByteVector &resul
 }
 
 // Decode an Asn message and return whatever kind of message pops out.
+/**
+ * `uperDecodeFromByteV` 函数的作用是解码一个 ASN 消息，并返回解码后的消息。
+ * 该函数接受两个参数：
+ * 一个是 `asn_TYPE_descriptor_t` 类型的指针，表示要解码的 ASN 类型；
+ * 另一个是 `ByteVector` 类型的引用，表示要解码的字节流。
+ * 函数返回一个 `void` 指针，指向解码后的消息。如果解码失败，则返回 `NULL`。
+ */
 void *uperDecodeFromByteV(ASN::asn_TYPE_descriptor_t *asnType,ByteVector &bv)
 {
 	void *result = NULL;
@@ -78,6 +90,14 @@ void *uperDecodeFromByteV(ASN::asn_TYPE_descriptor_t *asnType,ByteVector &bv)
 }
 
 // Same as uperDecodeFromByteV but work on a BitVector
+/**
+ * `uperDecodeFromBitV` 函数的作用是将一个 `BitVector` 类型的位向量转换为一个字节向量，
+ * 并调用 `uperDecodeFromByteV` 函数对其进行解码。
+ * 该函数接受两个参数：
+ * 一个是 `asn_TYPE_descriptor_t` 类型的指针，表示要解码的 ASN 类型；
+ * 另一个是 `BitVector` 类型的引用，表示要解码的位向量。
+ * 函数返回一个 `void` 指针，指向解码后的消息。如果解码失败，则返回 `NULL`。
+ */
 void *uperDecodeFromBitV(ASN::asn_TYPE_descriptor_t *asnType,BitVector &in)
 {
 	ByteVector bv(in);
@@ -86,6 +106,15 @@ void *uperDecodeFromBitV(ASN::asn_TYPE_descriptor_t *asnType,BitVector &in)
 
 // Set the ASN BIT_STRING_t to an allocated buffer of the proper size.
 // User must determine the proper size for the ASN message being used.
+/**
+ * `setAsnBIT_STRING` 函数的作用是设置一个ASN::BIT_STRING_t类型的变量，
+ * 使其指向一个已分配好的缓冲区，并设置缓冲区的大小和未使用的位数。
+ * 该函数接受三个参数：
+ * 一个是ASN::BIT_STRING_t` 类型的指针，表示要设置的 `BIT_STRING` 变量；
+ * 另一个是 `uint8_t` 类型的指针，表示已分配好的缓冲区；
+ * 最后一个参数是一个整数，表示 `BIT_STRING` 的总位数。
+ * 函数会根据总位数计算出缓冲区的大小，并设置未使用的位数。
+ */
 void setAsnBIT_STRING(ASN::BIT_STRING_t *result,uint8_t *buf, unsigned numBits)
 {
 	result->buf = buf;
@@ -93,6 +122,13 @@ void setAsnBIT_STRING(ASN::BIT_STRING_t *result,uint8_t *buf, unsigned numBits)
 	result->bits_unused = (numBits%8) ? (8-(numBits%8)) : 0;
 }
 
+/**
+ * allocAsnBIT_STRING 函数的作用是分配一个ASN::BIT_STRING_t 类型的变量，
+ * 并设置其指向一个已分配好的缓冲区，并设置缓冲区的大小和未使用的位数。
+ * 该函数接受一个整数参数 `numBits`，表示 `BIT_STRING` 的总位数。
+ * 函数会根据总位数计算出缓冲区的大小，并使用 `calloc` 函数分配缓冲区。
+ * 然后，函数会调用 `setAsnBIT_STRING` 函数设置 `BIT_STRING` 变量的指针、缓冲区和未使用的位数，并返回该变量。
+ */
 ASN::BIT_STRING_t allocAsnBIT_STRING(unsigned numBits)
 {
 	ASN::BIT_STRING_t result;
@@ -100,7 +136,13 @@ ASN::BIT_STRING_t allocAsnBIT_STRING(unsigned numBits)
 	return result;
 }
 
-/** Copy a string of ASCII digits into an ASN.1 SEQUENCE OF DIGIT. */
+/** Copy a string of ASCII digits into an ASN.1 SEQUENCE OF DIGIT. 
+ * setASN1SeqOfDigits函数的作用是将一个字符串转换为 ASN.1 SEQUENCE OF DIGIT 类型的结构体。
+ * 该函数接受两个参数，第一个参数是一个 `void` 指针，表示要设置的 ASN.1 SEQUENCE OF DIGIT 类型的结构体；
+ * 第二个参数是一个 `const char*` 类型的指针，表示要转换的字符串。
+ * 函数会将字符串中的每个数字转换为一个ASN::Digit_t类型的结构体，
+ * 并将这些结构体添加到 ASN.1 SEQUENCE OF DIGIT 类型的结构体中。
+*/
 void setASN1SeqOfDigits(void *seq, const char* digit)
 {
 	ASN::asn_sequence_empty(seq);
@@ -118,6 +160,11 @@ void setASN1SeqOfDigits(void *seq, const char* digit)
 // Example:
 //		ENUMERATED_t someAsnEnumeratedValue;			// In asn somewhere.
 //		someAsnEnumeratedValue = toAsnEnumerated(3);	// In our code.
+/**
+  函数的功能是将一个无符号整数转换为 ASN ENUMERATED 结构体
+  它使用 asn_long2INTEGER 函数将整数值转换为 ENUMERATED_t 结构体，并返回结果。
+  注意，如果在赋值时使用此函数，则不会释放先前的值（如果有）。
+ */
 ASN::ENUMERATED_t toAsnEnumerated(unsigned value)
 {
 	ASN::ENUMERATED_t result;
@@ -126,6 +173,11 @@ ASN::ENUMERATED_t toAsnEnumerated(unsigned value)
 	return result;
 }
 
+/**
+ * 该函数的功能是将 ASN ENUMERATED 结构体转换为 long 类型。
+ * 它使用 asn_INTEGER2long 函数将 ENUMERATED_t 结构体转换为 long 类型，并返回结果。
+ * 如果转换失败，将记录错误日志并返回未定义的结果。
+ */
 long asnEnum2long(ASN::ENUMERATED_t &thing)
 {
 	long result;
@@ -140,9 +192,18 @@ long asnEnum2long(ASN::ENUMERATED_t &thing)
 
 // The argument must be A_SEQUENCE_OF(Digit_t) or equivalent.
 // Digit_t is typedefed to long.
+// 这行代码定义了一个名为 asn_sequence_of_long 的类型别名，
+// 它是一个 A_SEQUENCE_OF(long) 序列，即一个 long 类型的序列。
+// 这个类型别名通常用于 ASN.1 编码和解码中，用于表示一个由 long 类型组成的序列。
 typedef A_SEQUENCE_OF(long) asn_sequence_of_long;
+
+/**
+ * 该函数的功能是将 ASN.1 序列 A_SEQUENCE_OF(Digit_t) 转换为 ByteVector 类型。
+ * 它首先将 void 指针参数转换为 asn_sequence_of_long 类型，然后遍历该序列并将其转换为 ByteVector 类型。
+ * 在遍历序列时，它将 Digit_t 类型（在此处为 long）转换为 uint8_t 类型，并将其存储在 ByteVector 中。
+ */
 AsnSeqOfDigit2BV::AsnSeqOfDigit2BV(void*arg)
-		: ByteVector(((asn_sequence_of_long*)arg)->count)
+		: ByteVector(((asn_sequence_of_long*)arg)->count)	// 继承自 ByteVector, 调用有参构造函数初始化基类部分
 {
 	asn_sequence_of_long *list = (asn_sequence_of_long*)arg;
 	int cnt = size();
@@ -157,6 +218,10 @@ AsnSeqOfDigit2BV::AsnSeqOfDigit2BV(void*arg)
 //=============== Functions for AsnEnumMap ====================================
 
 // Call back for ASN print function.
+// 该函数是一个 ASN.1 解码回调函数，用于解析 ENUMERATED 类型的值并将其转换为 long 类型。
+// 它将传递给 ASN.1 解码器的缓冲区转换为字符串，并从字符串中提取数字部分，
+// 然后将其转换为 long 类型并存储在应用程序特定密钥中。
+// 它与 GGSN 或 SGSN 没有直接关系，但是在解析 GTP 协议消息时可能会使用 ASN.1 编码和解码。
 static int mycb(const void *buf, size_t size, void *application_specific_key)
 {
 	// Format of the value is "enumvalue (actualvalue)", eg: "5 (dat20)"
@@ -169,6 +234,14 @@ static int mycb(const void *buf, size_t size, void *application_specific_key)
 	return 0;
 }
 
+
+/**
+ * 该函数的功能是将枚举类型的值加载到 AsnEnumMap 对象中。
+ * 它使用传递的最大枚举值来计算枚举值的数量，并为存储枚举值的数组分配内存。
+ * 然后，它使用 asn_long2INTEGER 函数将枚举值转换为 ENUMERATED_t 结构体，
+ * 并使用 asn_TYPE_descriptor_t 的 print_struct 函数将其转换为字符串。
+ * 在转换为字符串时，它使用回调函数 mycb 将枚举值存储在 mActualValues 数组中。
+ */
 void AsnEnumMap::asnLoadEnumeratedValues(ASN::asn_TYPE_descriptor_t &asnp, unsigned maxEnumValue)
 {
 	mNumValues = (1+maxEnumValue);
@@ -187,6 +260,11 @@ void AsnEnumMap::asnLoadEnumeratedValues(ASN::asn_TYPE_descriptor_t &asnp, unsig
 	}
 }
 
+/**
+ * 该函数的功能是将 AsnEnumMap 对象中存储的枚举值和其对应的整数值打印到标准输出。
+ * 它遍历 mActualValues 数组并将每个枚举值和其对应的整数值打印到控制台。
+ * 如果枚举值的数量大于 8，则在每 8 个值之后打印一个换行符。
+ */
 void AsnEnumMap::dump()
 {
 	for (unsigned enumValue = 0; enumValue < mNumValues; enumValue++) {
@@ -199,6 +277,11 @@ void AsnEnumMap::dump()
 // Return the asn enum value for an actual value.
 // This is slow, but only happens at setup.
 // Return "close" value if none match.
+/**
+ * 该函数的功能是在 AsnEnumMap 对象中查找给定的实际值，并返回其对应的枚举值。
+ * 它遍历 mActualValues 数组并比较每个值与给定的实际值是否相等。
+ * 如果找到匹配的值，则返回其对应的枚举值。如果没有找到匹配的值，则返回最接近的枚举值
+ */
 int AsnEnumMap::findEnum(long actual)
 {
 	unsigned closeindex = 0;
@@ -214,6 +297,11 @@ int AsnEnumMap::findEnum(long actual)
 }
 
 // Call back for ASN print function.
+/**
+ * 该函数是一个 ASN.1 解码回调函数，用于解析 ENUMERATED 类型的值并将其转换为字符串。
+ * 它将传递给 ASN.1 解码器的缓冲区转换为字符串，并从字符串中提取数字部分，
+ * 然后将其存储在应用程序特定密钥中。
+ */
 static int mycb2(const void *buf, size_t size, void *application_specific_key)
 {
 	const char *cp = (const char*)buf;	// Gotta love c++.
@@ -224,6 +312,12 @@ static int mycb2(const void *buf, size_t size, void *application_specific_key)
 }
 
 // Like asn_fprint but return the result in a C++ string.
+/**
+ * 该函数名为 `asn2string`，它的功能是将 ASN.1 编码的结构体转换为字符串。
+ * 它使用 `asn_TYPE_descriptor_t` 结构体的 `print_struct` 函数将结构体转换为字符串，
+ * 并使用回调函数 `mycb2` 将字符串存储在 `std::ostringstream` 对象中。
+ * 最后，它将 `std::ostringstream` 对象转换为 `std::string` 对象并返回。
+ */
 std::string asn2string(ASN::asn_TYPE_descriptor_t *asnp, const void *struct_ptr)
 {
 	std::ostringstream ss;
@@ -231,6 +325,11 @@ std::string asn2string(ASN::asn_TYPE_descriptor_t *asnp, const void *struct_ptr)
 	return ss.str();
 }
 
+/**
+ * 这个函数的功能是将ASN.1编码的消息转换为可读的字符串，并将其记录在日志中。
+ * 如果调试标志被设置，它还会将消息记录到MGLOG和LOGWATCH中。
+ * 这个函数与GGSN或SGSN没有直接关系，但是它可能被用于记录与这些设备通信相关的消息。
+ */
 void asnLogMsg(unsigned rbid, ASN::asn_TYPE_descriptor_t *asnp, const void *struct_ptr,
 	const char *comment,
 	UEInfo *uep,		// Or NULL if none.
@@ -243,7 +342,7 @@ void asnLogMsg(unsigned rbid, ASN::asn_TYPE_descriptor_t *asnp, const void *stru
 		std::string id = uep ? uep->ueid() : format(" urnti=0x%x",urnti);
 		_LOG(INFO) << (comment?comment:"") <<id<<LOGVAR(rbid) <<" "<< readable.c_str();
 		if (debug && comment) {
-			MGLOG(comment <<id<<LOGVAR(rbid));
+			////MGLOG(comment <<id<<LOGVAR(rbid));
 			LOGWATCH(comment <<id<<LOGVAR(rbid));
 		}
 	}

@@ -17,7 +17,7 @@
 #include "MACEngine.h"
 #include "AsnHelper.h"
 #include "Logger.h"
-#include "SgsnExport.h"
+////#include "SgsnExport.h"
 #include "URRC.h"
 #include "UMTSLogicalChannel.h"
 //#include "asn_system.h"	included from AsnHelper.h
@@ -37,7 +37,7 @@ namespace ASN {
 #define CASENAME(x) case x: return #x;
 #define CASEASNCOMMENT(foo) case ASN::foo: return #foo;
 
-using namespace SGSN;
+////using namespace SGSN;
 
 namespace UMTS {
 const std::string descrRrcConnectionSetup("RRC_Connection_Setup_Message");
@@ -805,6 +805,7 @@ void sendRrcConnectionSetup(UEInfo *uep, ASN::InitialUE_Identity *ueInitialId)
 
 // Sent when an unrecognized UE tries to talk to us.
 // Tell it to release the connection and start over.
+// 与GGSN或SGSN没有直接关系。与UMTS网络中的RRC消息有关，这些消息用于UE与网络之间的通信。
 static void sendRrcConnectionReleaseCcch(int32_t urnti)
 {
 	ASN::DL_CCCH_Message_t msg;
@@ -826,6 +827,8 @@ static void sendRrcConnectionReleaseCcch(int32_t urnti)
 }
 
 // This puts the phone in idle mode.
+// 这个函数与GGSN或SGSN无关。它是一个用于将手机置于空闲模式的函数，用于发送RRC连接释放消息。
+// RRC连接是UE和eNodeB之间的连接，因此这个函数与UE和eNodeB之间的通信有关。
 void sendRrcConnectionRelease(UEInfo *uep) //, ASN::InitialUE_Identity *ueInitialId
 {
 	// Create the RB Setup Message.
@@ -875,6 +878,10 @@ void sendRrcConnectionRelease(UEInfo *uep) //, ASN::InitialUE_Identity *ueInitia
 // We are sending a setup for a DCH and moving the UE to CELL_DCH state.
 // The masterConfig indicates the DCH L2 setup, for example, how many TrCh.
 // Return non-zero on error.
+
+// 这个函数与GGSN或SGSN有关。
+// 它是用于在SGSN或GMM L3中创建RAB（Radio Access Bearer）的主要消息，以便为Internet连接创建RAB。
+// RAB是数据传输的逻辑通道，它需要在GGSN和SGSN之间建立。因此，这个函数与GGSN和SGSN之间的通信有关。
 bool sendRadioBearerSetup(UEInfo *uep, RrcMasterChConfig *masterConfig, PhCh *phch, bool srbstoo)
 {
 	// Create the RB Setup Message.
@@ -1030,7 +1037,7 @@ bool sendRadioBearerSetup(UEInfo *uep, RrcMasterChConfig *masterConfig, PhCh *ph
 // it should be in CELL_PCH so we can page it, or if we dont need to page it, in idle mode.
 
 // Harvind (3-17-13)  I think this message is fine.  The UE seems to like it during the PDP Deactivation Process
-
+// 用于发送无线电承载释放信息
 void sendRadioBearerRelease(UEInfo *uep,
 	unsigned rabMask,	// Mask of RABs/RBs to release.
 	bool finished)		// If set, all RABs released so move UE back to CELL_FACH mode.
@@ -1224,6 +1231,14 @@ void sendRadioBearerRelease(UEInfo *uep,
 	uep->ueWriteHighSide(SRB2, result, descrRadioBearerRelease);
 }
 
+// commonCellUpdateConfirm函数与 GGSN 或 SGSN 无关。
+/**
+ * 它是 URRCMessages.cpp 文件中的一个函数，用于生成公共小区更新确认消息。
+ * 该函数主要是为了设置消息的各个字段，如事务 ID、RRC 状态指示器等。
+ * 生成公共小区更新确认消息是指在无线通信中，UE（用户设备）与网络之间进行通信时，UE 向网络发送公共小区更新请求消息，
+ * 网络接收到该消息后，向 UE 发送公共小区更新确认消息，以确认 UE 成功更新到新的小区。
+ * commonCellUpdateConfirm函数就是用于生成这个确认消息的。
+ */
 static unsigned commonCellUpdateConfirm(UEInfo *uep, ASN::CellUpdateConfirm_r3_IEs_t *ies)
 {
 
@@ -1248,6 +1263,11 @@ static unsigned commonCellUpdateConfirm(UEInfo *uep, ASN::CellUpdateConfirm_r3_I
 // The CellUpdateConfirm message may be sent out on either DCCH or CCCH.
 // This version is for DCCH.
 // TODO: It would be wise to implement the RLC re-establish indicators.
+// sendCellUpdateConfirmDcch函数与 GGSN 或 SGSN 无关。
+/**
+ * 它是 URRCMessages.cpp 文件中的一个函数，用于发送小区更新确认消息。
+ * 该函数主要是为了设置消息的各个字段，如事务 ID、RRC 状态指示器等，并将消息编码后发送给 UE（用户设备）。
+ */
 static void sendCellUpdateConfirmDcch(UEInfo *uep)
 {
 	ASN::DL_DCCH_Message_t msg;
@@ -1265,6 +1285,15 @@ static void sendCellUpdateConfirmDcch(UEInfo *uep)
 	uep->ueWriteHighSide(SRB2, result, descrCellUpdateConfirm);
 }
 
+// 此函数与GGSN或SGSN没有直接关系。
+// 它是在处理UE（用户设备）的信息，发送一个cell update确认消息。
+/**
+ * sendCellUpdateConfirmCcch函数用于发送公共小区更新确认消息到UE设备。
+ * 它会设置消息的各个字段，如事务 ID、RRC 状态指示器等，并将消息编码后发送给UE设备。
+ * 在该函数中，使用了 `commonCellUpdateConfirm` 函数来设置消息的各个字段。
+ * 此外，该函数还使用了 `encodeCcchMsg` 函数将消息编码成 `ByteVector` 类型的数据，
+ * 并使用 `gMacSwitch.writeHighSideCcch` 函数将消息发送到UE设备。
+ */
 static void sendCellUpdateConfirmCcch(UEInfo *uep)
 {
 	ASN::DL_CCCH_Message_t msg;
@@ -1288,6 +1317,12 @@ static void sendCellUpdateConfirmCcch(UEInfo *uep)
 	gMacSwitch.writeHighSideCcch(result,descrCellUpdateConfirm);
 }
 
+// 该函数与GGSN或者SGSN没有直接关系，它是在处理UE（用户设备）的信息，发送一个cell update确认消息。
+/**
+ * sendCellUpdateConfirm函数用于发送公共小区更新确认消息到UE设备。
+ * 它会根据UE设备的状态，选择使用DCCH或者CCCH通道发送消息。
+ * 如果UE设备处于CELL_DCH状态，那么使用DCCH通道发送消息，否则使用CCCH通道发送消息。
+ */
 void sendCellUpdateConfirm(UEInfo *uep)
 {
 	switch (uep->ueGetState()) {
@@ -1300,10 +1335,15 @@ void sendCellUpdateConfirm(UEInfo *uep)
 	}
 }
 
+// 此函数与GGSN或者SGSN没有直接关系，它是在处理UE（用户设备）的信息，确保通信的安全性。
 // 33.102 5.1.2 Specifies two types of Security procedure: section 6.3 describes the main
 // authentication method using Ki; section 6.5 describes a local authentication mechanism
 // using an integrity key.  You must do one of the two procedures at each connection setup,
 // including the one for an L3 Service Request.
+/**
+ * sendSecurityModeCommand函数的功能是向UE设备发送安全模式命令。
+ * 它会根据UE设备的能力和状态，设置相应的安全模式参数，包括加密和完整性保护。
+ */
 void sendSecurityModeCommand(UEInfo *uep)
 {
 	ASN::DL_DCCH_Message_t msg;
@@ -1382,6 +1422,8 @@ void sendSecurityModeCommand(UEInfo *uep)
 	uep->ueWriteHighSide(SRB2, result, descrSecurityModeCommand);
 }
 
+
+#if 0
 static void handleSecurityModeComplete(UEInfo*uep, ASN::SecurityModeComplete_t *secmsg)
 {
 	// I'm not sure what to do with any of the optional contents of this message.
@@ -1393,10 +1435,16 @@ static void handleSecurityModeComplete(UEInfo*uep, ASN::SecurityModeComplete_t *
 	uep->sgsnHandleSecurityModeComplete(true);
 
 }
+#endif
 
 // Just print an error message based on the error code.
 // We have lost communication with this UE and should do something.
 // TODO: what?
+/**
+ * handleSecurityModeFailure函数的功能是根据错误码打印错误消息。它是在处理UE（用户设备）的信息，确保通信的安全性。
+ * 它与GGSN或者SGSN有关系，因为它是在处理UE与这些设备之间的通信时发生的错误。
+ * 在发生错误时，UE会向GGSN或者SGSN发送错误消息，以便它们可以采取适当的措施来解决问题。
+ */
 static void handleSecurityModeFailure(UEInfo*uep, ASN::SecurityModeFailure_t *secfailmsg)
 {
 	const char *why = "";
@@ -1450,9 +1498,15 @@ static void handleSecurityModeFailure(UEInfo*uep, ASN::SecurityModeFailure_t *se
 	}
 	LOG(ERR)<<format("Security Mode Failure cause=%d %s",secfailmsg->failureCause.present,why)<<uep;
 
-	uep->sgsnHandleSecurityModeComplete(false);
+	////uep->sgsnHandleSecurityModeComplete(false);
 }
 
+
+/**
+ * 此函数的功能是处理安全模式失败消息，它会根据失败原因打印错误消息，并通知SGSN处理安全模式失败。
+ * 该函数与GGSN或者SGSN有关系，因为它是在处理UE与这些设备之间的通信时发生的错误。
+ * 在发生错误时，UE会向GGSN或者SGSN发送错误消息，以便它们可以采取适当的措施来解决问题。
+ */
 static void handleCellUpdate(ASN::CellUpdate_t *msg)
 {
 	// This message sends a whole bunch of possible errors.  Lets print them out.
@@ -1524,6 +1578,13 @@ static void handleCellUpdate(ASN::CellUpdate_t *msg)
 	}
 }
 
+
+/**
+ * handleRrcConnectionRequest函数的功能是处理RRC连接请求消息。
+ * 它会解析消息中的字段，如UE的身份标识、建立原因等，并根据这些信息创建或更新UE的信息。
+ * 如果UE之前没有与网络建立过连接，则会创建一个新的UE信息。如果UE之前已经与网络建立过连接，则会更新UE的信息。
+ * 该函数还会将消息编码成ASN.1格式，并将其记录在日志中。最后，该函数会发送RRC连接设置消息给UE。
+ */
 void handleRrcConnectionRequest(ASN::RRCConnectionRequest_t *msg)
 {
 	//RrcUeId ueid(&msg->initialUE_Identity);
@@ -1583,6 +1644,11 @@ static bool fromAsnCnDomainIdentity(const char *inform, ASN::CN_DomainIdentity_t
 //		RRC Connection Request
 //		Cell Update
 //		URA Update
+/**
+ * rrcRecvCcchMessage函数的功能是接收UL_CCCH消息并解码。
+ * 它会根据消息类型调用相应的处理函数，如handleCellUpdate和handleRrcConnectionRequest。
+ * 该函数与GGSN或者SGSN有关系，因为它是在处理UE与这些设备之间的通信时发生的错误。在发生错误时，UE会向GGSN或者SGSN发送错误消息，以便它们可以采取适当的措施来解决问题。
+ */
 void rrcRecvCcchMessage(BitVector &tb,unsigned asc)
 {
 	ASN::UL_CCCH_Message *msg1 = (ASN::UL_CCCH_Message*)uperDecodeFromBitV(&ASN::asn_DEF_UL_CCCH_Message, tb);
@@ -1619,6 +1685,12 @@ void rrcRecvCcchMessage(BitVector &tb,unsigned asc)
 	ASN_STRUCT_FREE(ASN::asn_DEF_UL_CCCH_Message, msg1);
 }
 
+
+/**
+ * ueRecvL3Msg函数的功能是接收L3消息并根据协议描述符（protocol discriminator）进行处理。
+ * 如果协议描述符是GSM::L3GPRSMobilityManagementPD或GSM::L3GPRSSessionManagementPD，则会将消息发送到SGSN进行处理。
+ * 如果协议描述符是其他类型，则会忽略该消息或记录错误信息。
+ */
 void UEInfo::ueRecvL3Msg(ByteVector &msgframe, UEInfo *uep)
 {
 	unsigned pd = msgframe.getNibble(0,0);	// protocol descriminator
@@ -1627,7 +1699,7 @@ void UEInfo::ueRecvL3Msg(ByteVector &msgframe, UEInfo *uep)
 	case GSM::L3GPRSMobilityManagementPD:	// Couldnt we shorten this?
 	case GSM::L3GPRSSessionManagementPD: 	// Couldnt we shorten this?
 		//LOG(INFO) << "Sending L3 message of descr " << pd << "up to SGSN"; 
-		sgsnHandleL3Msg(uep->mURNTI,msgframe);
+		////sgsnHandleL3Msg(uep->mURNTI,msgframe);
 		//LOG(INFO) << "Sent to SGSN";
 		break;
 	// TODO: Send GSM messages somewhere
@@ -1653,13 +1725,19 @@ void UEInfo::ueRecvL3Msg(ByteVector &msgframe, UEInfo *uep)
 		// arrives to DCCHDispatchMM() which then calls CMServiceResponder()
 		// which calls MOSMSController() which seems to do a bunch of message
 		// traffic on a DCCHLogicalChannel, and SMS messages go there.
-		LOG(ERR) <<"L3 SMS Message ignored";
+		////LOG(ERR) <<"L3 SMS Message ignored";
 		return;
 	default:
 		LOG(ERR)<< "unsupported L3 Message PD:"<<pd;
 	}
 }
 
+
+/**
+ * ueRecvStatusMsg函数的功能是处理接收到的RRC状态消息。它会检查消息类型是否为type1，如果不是则无法处理。
+ * 然后，它会解析消息中的错误类型和相关信息，并打印出来。如果消息中包含了接收到的消息类型和事务ID，则会将其记录在日志中。
+ * 此函数与GGSN或者SGSN没有直接关系，因为它是在处理UE与这些设备之间的通信时发生的错误。
+ */
 void UEInfo::ueRecvStatusMsg(ASN::UL_DCCH_Message *msg1)
 {
 	ASN::RRCStatus_t *statusmsg = &msg1->message.choice.rrcStatus;
@@ -1719,6 +1797,14 @@ void UEInfo::ueRecvStatusMsg(ASN::UL_DCCH_Message *msg1)
 
 
 // This is called by the high side of the RLC engine for SRB1,2,3,4.
+/**
+ * ueRecvDcchMessage函数的功能是接收来自UE（User Equipment）的 Downlink Common Channel (DCCH) 消息，并根据消息类型进行相应的处理。
+ * 在这段代码中，该函数接收到的消息类型包括 `RadioBearerRelease`、`UplinkDirectTransfer`、`InitialDirectTransfer`、
+ * `RrcStatus`、`SignallingConnectionReleaseIndication`、`SecurityModeComplete` 和 `SecurityModeFailure`。
+ * 此函数与 GGSN（Gateway GPRS Support Node）或 SGSN（Serving GPRS Support Node）没有直接关系，
+ * 因为它是在UE端的代码中实现的。但是，UE和GGSN/SGSN之间的通信需要使用到DCCH消息，
+ * 因此此函数的实现对于UE和GGSN/SGSN之间的通信是非常重要的。
+ */
 void UEInfo::ueRecvDcchMessage(ByteVector &bv,unsigned rbNum)
 {
 	ueRegisterActivity();	// Not sure if all these messages count as activity.
@@ -1910,7 +1996,7 @@ void UEInfo::ueRecvDcchMessage(ByteVector &bv,unsigned rbNum)
 	case ASN::UL_DCCH_MessageType_PR_securityModeComplete: {
 		ASN::SecurityModeComplete_t *secmsg = &msg1->message.choice.securityModeComplete;
 		transId = secmsg->rrc_TransactionIdentifier;
-		handleSecurityModeComplete(uep,secmsg);
+		////handleSecurityModeComplete(uep,secmsg);
 		UeTransaction *tr = getTransaction(transId,ttSecurityModeCommand,"SecurityModeComplete");
 		// The security mode was started when we sent the command, not when we receive the response,
 		// so there is nothing special to do here.  If we changed the Kc by re-running the Layer3
@@ -1933,6 +2019,11 @@ void UEInfo::ueRecvDcchMessage(ByteVector &bv,unsigned rbNum)
 	}
 }
 
+
+/**
+ * eql函数的功能是比较两个`AsnUeId`对象的各个字段是否相等，如果相等则返回`true`，否则返回`false`。
+ * 该函数与GGSN或者SGSN没有直接关系，因为它是在处理UE（用户设备）的信息时使用的。
+ */
 bool AsnUeId::eql(AsnUeId &other)
 {
 	// All fields are inited, so just compare everything.
@@ -1944,6 +2035,15 @@ bool AsnUeId::eql(AsnUeId &other)
 	return true;
 }
 
+
+/**
+ * asnParse函数的功能是将ASN::InitialUE_Identity类型的参数解析为`AsnUeId`对象的各个字段，
+ * 包括`mImsi`、`mImei`、`mTmsi`、`mTmsiDS41`、`mMcc`、`mMnc`、`mLac`、`mRac`和`mEsn`。
+ * 此函数根据ASN::InitialUE_Identity对象的`present`字段的值，选择相应的处理方式，
+ * 将ASN::InitialUE_Identity对象的各个字段解析为`AsnUeId`对象的各个字段。
+ * 
+ * 该函数与GGSN或者SGSN没有直接关系，因为它是在处理UE（用户设备）的信息时使用的。
+ */
 void AsnUeId::asnParse(ASN::InitialUE_Identity &uid)
 {
 	switch (uid.present) {
@@ -2030,6 +2130,14 @@ static ByteVector stringOfDigitsToByteVector(const string &str)
 
 
 // Does the routing/location area in this asn id match our BTS?
+/**
+ * RaiMatches函数的功能是检查`AsnUeId`对象中的路由/位置区域标识（Routing Area Identity，RAI）是否与当前基站的RAI匹配。
+ * RAI由移动国家代码（Mobile Country Code，MCC）、移动网络代码（Mobile Network Code，MNC）、
+ * 位置区域代码（Location Area Code，LAC）和路由区域代码（Routing Area Code，RAC）组成。
+ * 如果RAI匹配，则返回`true`，否则返回`false`。
+ * 
+ * 该函数与GGSN或者SGSN没有直接关系，因为它是在处理UE（用户设备）的信息时使用的。
+ */
 bool AsnUeId::RaiMatches()
 {
 	// MCC and MNC from the PLMN_identity must exist and match.

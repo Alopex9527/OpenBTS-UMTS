@@ -46,10 +46,12 @@ namespace UMTS {
 	extern CommandLine::CLIStatus rrcTest(int argc, char **argv, std::ostream& os);
 	extern CommandLine::CLIStatus rlcTest(int argc, char **argv, std::ostream& os);
 };
+#if 0
 namespace SGSN {
 	// Hack.
 	extern CommandLine::CLIStatus sgsnCLI(int argc, char **argv, std::ostream &os);
 };
+#endif
 
 #include <Globals.h>
 
@@ -1288,6 +1290,7 @@ static CLIStatus stats(int argc, char** argv, ostream& os)
 
 void Parser::addCommands()
 {
+	// 第二个参数是函数指针（回调函数）
 	addCommand("uptime", uptime, "-- show BTS uptime and BTS frame number.");
 	addCommand("help", showHelp, "[command] -- list available commands or gets help on a specific command.");
 	addCommand("shutdown", exit_function, "[wait] -- shut down or restart OpenBTS, either immediately, or waiting for existing calls to clear with a timeout in seconds");
@@ -1313,7 +1316,7 @@ void Parser::addCommands()
 	addCommand("freqcorr", freqcorr, "[newOffset] -- get/set the new radio frequency offset");
 	addCommand("rmconfig", rmconfig, "key -- set a configuration value back to its default or remove a custom key/value pair");
 	addCommand("notices", notices, "-- show startup copyright and legal notices");
-	addCommand("sgsn", SGSN::sgsnCLI,"SGSN mode sub-command.  Type: sgsn help for more");
+	////addCommand("sgsn", SGSN::sgsnCLI,"SGSN mode sub-command.  Type: sgsn help for more");
 	addCommand("crashme", crashme, "force crash of OpenBTS for testing purposes");
 	//addCommand("stats", stats,"[patt] OR clear -- print all, or selected, performance counters, OR clear all counters");
 	addCommand("rlctest", UMTS::rlcTest, "-- internal testing commands for UMTS");

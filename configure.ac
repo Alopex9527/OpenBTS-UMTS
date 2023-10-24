@@ -104,7 +104,6 @@ AC_CONFIG_FILES([\
     Control/Makefile \
     GSM/Makefile \
     UMTS/Makefile \
-    SGSNGGSN/Makefile \
     SIP/Makefile \
     TransceiverRAD1/Makefile \
     TransceiverUHD/Makefile \

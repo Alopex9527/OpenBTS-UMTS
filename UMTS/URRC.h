@@ -19,7 +19,7 @@
 #include "URRCTrCh.h"
 #include "URRCRB.h"
 #include "URLC.h"
-#include "../SGSNGGSN/SgsnExport.h"
+////#include "../SGSNGGSN/SgsnExport.h"
 #include "asn_system.h"
 #include "URRCMessages.h"
 #include "IntegrityProtect.h"
@@ -280,7 +280,9 @@ struct UeTransaction : UEDefs
 // T315: 180sec, used for PS connection, timeout to idle mode after radio link failure.
 // T319: unspecified, when to start DRX mode after entering CELL_PCH or URA_PCH state.
 static int sNextUeDebugId = 1;	// Each UE gets a human-readable id for log messages.
-class UEInfo : public SGSN::MSUEAdapter, public UEDefs 
+
+////class UEInfo : public SGSN::MSUEAdapter, public UEDefs 
+class UEInfo : public UEDefs 
 {
 	int mUeDebugId;
 	UEState mUeState;
@@ -307,7 +309,7 @@ class UEInfo : public SGSN::MSUEAdapter, public UEDefs
 	// We need to remember which rbs have been used.
 	// While we are at it, we will remember everything we told the SGSN so if
 	// we get a duplicate request we can return identical information.
-	SGSN::RabStatus mConfiguredRabs[gsMaxRB];
+	////SGSN::RabStatus mConfiguredRabs[gsMaxRB];
 
 
 	private:
@@ -410,11 +412,17 @@ class UEInfo : public SGSN::MSUEAdapter, public UEDefs
 	void ueWriteLowSide(RbId rbid, const BitVector &pdu, UEState state);
 
 	// This user data sdu popped out of the top of the RLC, and now wants to go somewhere.
+	/**
+	 * ueRecvData函数的功能是处理从RLC层传来的用户数据SDU，并将其发送到SGSN。
+	 * 函数接受两个参数：`sdu`表示接收到的用户数据SDU，`rbid`表示无线电资源块ID。
+	 * 函数内部调用了`ueRegisterActivity`函数，表示UE正在进行活动。
+	 * 然后将接收到的SDU打印到控制台，并调用`sgsnWriteLowSide`函数将SDU发送到SGSN。
+	 */
 	void ueRecvData(ByteVector &sdu, RbId rbid) {
 		ueRegisterActivity();
 		// Currently all it can be is PS data because we do not support CS.
-		LOG(INFO) << "Sending SDU to SGSN: " << sdu;
-		sgsnWriteLowSide(sdu,mURNTI,rbid);
+		////LOG(INFO) << "Sending SDU to SGSN: " << sdu;
+		////sgsnWriteLowSide(sdu,mURNTI,rbid);
 	}
 	void ueRecvDcchMessage(ByteVector &bv,unsigned rbid);
 	void ueRecvL3Msg(ByteVector &msgframe, UEInfo *uep);

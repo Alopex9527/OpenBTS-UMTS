@@ -16,9 +16,13 @@
 #include "URRC.h"
 #include "UMTSLogicalChannel.h"
 #include "MACEngine.h"
-#include "../SGSNGGSN/SgsnExport.h"
-#include "../SGSNGGSN/GPRSL3Messages.h"
-#include "../SGSNGGSN/SgsnBase.h"	// For SmCause values.
+////#include "../SGSNGGSN/SgsnExport.h"
+////#include "../SGSNGGSN/GPRSL3Messages.h"
+////#include "../SGSNGGSN/SgsnBase.h"	// For SmCause values.
+/* 宏函数CASENAME的作用是将一个枚举类型的值转换为对应的字符串。
+   具体来说，当传入一个枚举类型的值`x`时，`CASENAME(x)`会返回`x`所对应的字符串。
+   这个宏函数通常用于调试和日志记录，方便开发人员查看枚举类型的值。
+*/
 #define CASENAME(x) case x: return #x;
 
 // Here we have documentation on the flows through RRC, excluding the internals of RLC,
@@ -603,6 +607,7 @@ UEInfo *Rrc::findUeByAsnId(AsnUeId *asnId)
 	// and get around to registration with the SGSN - the SGSN will look
 	// for the necessary UE in RRC using the old URNTI, so we want to keep the same one.
 	uint32_t urnti = 0;
+#if 0
 	UEInfo *result;
 	if (asnId->mImsi.size() && (urnti = SGSN::Sgsn::findHandleByImsi(asnId->mImsi))) {
 		result = findUeByUrnti(urnti);
@@ -612,6 +617,7 @@ UEInfo *Rrc::findUeByAsnId(AsnUeId *asnId)
 		result = findUeByUrnti(urnti);
 		return result ? result : new UEInfo(urnti);
 	}
+#endif
 	LOG(ALERT) << "no match"<<LOGHEX2("ptmsi",(uint32_t) asnId->mPtmsi)<<LOGVAR2("raimatch",asnId->RaiMatches())
 		<<LOGHEX2("findHandlebyPTmsi-urnti",urnti);
 	return NULL;
@@ -704,6 +710,10 @@ void UEInfo::ueRecvRrcConnectionSetupResponse(unsigned transId, bool success, co
 	if (tr) tr->transClose();	// Done with this one.
 }
 
+/**
+ * ueRecvRadioBearerReleaseResponse函数是 URRC.cpp 文件中的一个函数，其作用是接收来自 UE 的无线电承载释放响应消息。
+ * 这个函数与 SGSN 和 GGSN 有关
+ */
 void UEInfo::ueRecvRadioBearerReleaseResponse(unsigned transId, bool success, const char *msgname)
 {
 	UeTransaction *tr = getTransaction(transId,ttRadioBearerRelease,msgname);
@@ -718,16 +728,23 @@ void UEInfo::ueRecvRadioBearerReleaseResponse(unsigned transId, bool success, co
 			this->ueSetState(tr->mNewState);
 		}
 	}
+#if 0
 	for (RbId rbid = 5; rbid < gsMaxRB; rbid++) {
 		if (tr->mRabMask & (1<<rbid)) {
-			mConfiguredRabs[rbid].mStatus = success ?
-				SGSN::RabStatus::RabIdle : SGSN::RabStatus::RabFailure;
+			mConfiguredRabs[rbid].mStatus = success ? SGSN::RabStatus::RabIdle : SGSN::RabStatus::RabFailure;
 			// The Ggsn long since destroyed these RABs, so we do not need to notify it.
 		}
 	}
+#endif
 	tr->transClose();	// Done with this one.
 }
 
+
+/**
+ * ueRecvRadioBearerSetupResponse函数是 URRC.cpp 文件中的一个函数，其作用是接收来自 UE 的无线电承载建立响应消息。
+ * 这个函数与 SGSN 和 GGSN 有关，
+ * 在这个函数中，如果 RAB 建立成功，会通知 GGSN 发送 PDP Accept 消息，否则会拆除 PDP Context。
+ */
 void UEInfo::ueRecvRadioBearerSetupResponse(unsigned transId, bool success, const char *msgname)
 {
 	UeTransaction *tr = getTransaction(transId,ttRadioBearerSetup,msgname);
@@ -738,6 +755,7 @@ void UEInfo::ueRecvRadioBearerSetupResponse(unsigned transId, bool success, cons
 	} else {
 		macUnHookupDch(this);
 	}
+#if 0
 	for (RbId rbid = 5; rbid < gsMaxRB; rbid++) {
 		if (tr->mRabMask & (1<<rbid)) {
 			mConfiguredRabs[rbid].mStatus = success ?
@@ -746,8 +764,10 @@ void UEInfo::ueRecvRadioBearerSetupResponse(unsigned transId, bool success, cons
 			this->sgsnHandleRabSetupResponse(rbid,success);
 		}
 	}
+#endif
 	tr->transClose();	// Done with this one.
 }
+
 
 void UEInfo::ueSetState(UEState newState)
 {
@@ -864,13 +884,17 @@ void UEInfo::msWriteHighSide(ByteVector &dlpdu, uint32_t rbid, const char *descr
 	}
 }		
 
-
+/**
+ * 这个函数的功能是将数据从SGSN发送到UE的高侧。
+ * 它将数据包装在指定的RbId中，并将其传递给相应的RLC层进行传输。
+ * 这个函数与GGSN或SGSN有关，因为它是从这些节点中调用的，以便将数据发送到UE。
+ */
 void UEInfo::ueWriteHighSide(RbId rbid, ByteVector &sdu, string descr)
 {
 	ueRegisterActivity();
 	PATLOG(1,format("ueWriteHighSide(%d,sizebytes=%d,%s)",rbid,sdu.size(),descr.c_str()));
-	LOG(INFO) << "From SGSN: " << format("ueWriteHighSide(%d,sizebytes=%d,%s)",rbid,sdu.size(),descr.c_str());
-        LOG(INFO) << "SGSN data: " << sdu;
+	////LOG(INFO) << "From SGSN: " << format("ueWriteHighSide(%d,sizebytes=%d,%s)",rbid,sdu.size(),descr.c_str());
+    ////LOG(INFO) << "SGSN data: " << sdu;
 	URlcTrans *rlc = getRlcDown(rbid);
 	if (!rlc) {
 		LOG(ERR) << "logic error in ueWriteHighSide: null rlc";
@@ -889,12 +913,19 @@ void UEInfo::ueWriteHighSide(RbId rbid, ByteVector &sdu, string descr)
 // have to worry overly about a message race.
 // Free all the RABs in rabMask.
 // We use the RB id for the RAB id, so no mapping needed.
+/**
+ * msDeactivateRabs函数的功能是释放UE的RAB（Radio Access Bearer）资源。
+ * 它接收一个RAB掩码，该掩码指示哪些RAB需要被释放。如果释放的是最后一个RAB，那么UE将被移回CELL_FACH模式。
+ * 在释放RAB之前，该函数会将RAB状态设置为RabDeactPending。
+ * 最后，该函数会调用`sendRadioBearerRelease`函数来发送RadioBearerRelease消息。 
+ */
 void UEInfo::msDeactivateRabs(unsigned rabMask)
 {
 	unsigned numActive = 0;
 	// FIXME: The messages DeactivatePDPContextAccept and RadioBearerRelease are being put into
 	// the RLC queues simultaneously, which results in them being reversed.  Try sleeping a little.
 	//sleep(2);
+#if 0
 	for (RbId rbid = 5; rbid < gsMaxRB; rbid++) {
 		switch (mConfiguredRabs[rbid].mStatus) {
 		case SGSN::RabStatus::RabPending:	// Hmmm...
@@ -908,7 +939,13 @@ void UEInfo::msDeactivateRabs(unsigned rabMask)
 		default: break;
 		}
 	}
+#endif
 	sendRadioBearerRelease(this,rabMask,numActive==0);
+	/**
+	 * sendRadioBearerRelease函数的功能是向UE发送Radio Bearer Release消息，以释放指定的RAB资源。
+	 * 在 `msDeactivateRabs` 函数中，当所有指定的RAB资源都被释放时，`numActive` 的值将为0，
+	 * 此时 `sendRadioBearerRelease` 函数将被调用。
+	 */
 }
 
 //unsigned UEInfo::getActiveRabMask()
@@ -1244,6 +1281,7 @@ void RrcMasterChConfig::rrcConfigDchCS(DCHFEC *dch)
 // 
 // After return, the caller is going to send a message on SRB3, so are we supposed
 // to copy the RLC state before or after that message?
+#if 0
 static SGSN::RabStatus rrcAllocateRabForPdp(uint32_t urnti,int rbid,ByteVector &qosb)
 {
 	assert(rbid >= 5 && rbid < (int)gsMaxRB);
@@ -1367,10 +1405,12 @@ static SGSN::RabStatus rrcAllocateRabForPdp(uint32_t urnti,int rbid,ByteVector &
 	rabstatus->mRateDownlink = rabstatus->mRateUplink = ops;
 	return *rabstatus;
 }
+#endif
 
 // Allocate a RAB for CS (voice) service.
 // This needs to be called from the channel setup in the Control directory.
 // TODO: Currently we use rbid 5,6,7 which will interfere with simultaneous PS connections.
+#if 0
 SGSN::RabStatus rrcAllocateRabForCS(UEInfo *uep)
 {
 	ScopedLock(uep->mUeLock);
@@ -1446,6 +1486,7 @@ SGSN::RabStatus rrcAllocateRabForCS(UEInfo *uep)
 	rabstatus->mRateDownlink = rabstatus->mRateUplink = 0;	// Not used for CS connections.
 	return *rabstatus;
 }
+#endif
 
 // TODO: Fix these for multiple code blocks like the R2 versions below.
 // But since we are not using these other encode/decoders, no hurry.
@@ -1551,6 +1592,8 @@ unsigned RrcDefs::TurboEncodedSize(unsigned Xi, unsigned *codeBkSz, unsigned *fi
 
 };	// namespace UMTS
 
+
+#if 0
 // These routines are the interface between the SGSN and RRC:
 namespace SGSN {
 	MSUEAdapter *SgsnAdapter::findMs(uint32_t urnti) {
@@ -1574,3 +1617,4 @@ namespace SGSN {
 		UMTS::sendSecurityModeCommand(uep);
 	}
 };
+#endif
