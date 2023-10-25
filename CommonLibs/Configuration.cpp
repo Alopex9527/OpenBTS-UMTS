@@ -861,7 +861,11 @@ void ConfigurationTable::checkCacheAge()
 	}
 }
 
-
+/**
+ * 函数purge()的功能是清空缓存。
+ * 在函数内部，它使用了一个 `ScopedLock` 对象来锁定 `mLock`，
+ * 然后遍历 `mCache` 中的所有元素并将其删除。
+ */
 void ConfigurationTable::purge()
 {
 	ScopedLock lock(mLock);

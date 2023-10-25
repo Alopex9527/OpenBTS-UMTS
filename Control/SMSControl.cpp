@@ -52,11 +52,11 @@ using namespace Control;
 using namespace SMS;
 #endif
 
-#include "SIPInterface.h"
-#include "SIPUtility.h"
-#include "SIPMessage.h"
-#include "SIPEngine.h"
-using namespace SIP;
+////#include "SIPInterface.h"
+////#include "SIPUtility.h"
+////#include "SIPMessage.h"
+////#include "SIPEngine.h"
+////using namespace SIP;
 
 #include <Logger.h>
 #undef WARNING
